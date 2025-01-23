@@ -3,13 +3,10 @@ use IEEE.std_logic_1164.all;
 use IEEE.numeric_std.all;
 use IEEE.math_real.all;
 
+library work;
+use work.payload_aligner_pkg.all;
+
 entity payload_aligner is
-    generic(
-        PACKET_WIDTH_BITS   : natural := 64;
-        HEADER_A_WIDTH_BITS : natural := 48;
-        HEADER_B_WIDTH_BITS : natural := 48;
-        HEADER_C_WIDTH_BITS : natural := 16
-    );
     port(
         iClk            : in  std_logic;
         iReset          : in  std_logic;
@@ -48,12 +45,12 @@ architecture rtl of payload_aligner is
         PAYLOAD
     );
 
-    signal current_state       : state_t;
-    signal next_state          : state_t;
+    signal current_state    : state_t;
+    signal next_state       : state_t;
 
-    signal word_count : natural := 0;
+    signal word_count       : natural := 0;
 
-    signal packet_d1  : std_logic_vector(PACKET_WIDTH_BITS - 1 downto 0);
+    signal packet_d1        : std_logic_vector(PACKET_WIDTH_BITS - 1 downto 0);
     signal payload_valid_d1 : std_logic;
 
     signal header_A_latched : std_logic_vector(HEADER_A_WIDTH_BITS - 1 downto 0);
@@ -137,17 +134,17 @@ begin
                 header_B_latched <= (others => '0');
                 header_C_latched <= (others => '0');
             elsif word_count = 0 then
-                header_A_latched <= iPacket(63 downto 16); -- TODO: Create range constants in signal declaration
+                header_A_latched <= iPacket(HEADER_A_PACKET_RANGE);
             elsif word_count = 1 then
-                header_B_latched <= packet_d1(15 downto 0) & iPacket(63 downto 32);
-                header_C_latched <= iPacket(31 downto 16);
+                header_B_latched <= packet_d1(HEADER_B_PACKET_RANGE_0) & iPacket(HEADER_B_PACKET_RANGE_1);
+                header_C_latched <= iPacket(HEADER_C_PACKET_RANGE);
             end if;
         end if;
     end process;
 
-    oHeader_A <= iPacket(iPacket'left downto iPacket'left - HEADER_A_WIDTH_BITS + 1) when word_count = 0 else header_A_latched;
-    oHeader_B <= packet_d1(15 downto 0) & iPacket(63 downto 32) when word_count = 1 else header_B_latched;
-    oHeader_C <= iPacket(31 downto 16) when word_count = 1 else header_C_latched;
+    oHeader_A <= iPacket(HEADER_A_PACKET_RANGE) when word_count = 0 else header_A_latched;
+    oHeader_B <= packet_d1(HEADER_B_PACKET_RANGE_0) & iPacket(HEADER_B_PACKET_RANGE_1) when word_count = 1 else header_B_latched;
+    oHeader_C <= iPacket(HEADER_C_PACKET_RANGE) when word_count = 1 else header_C_latched;
 
     p_align_payload : process(all)
     begin

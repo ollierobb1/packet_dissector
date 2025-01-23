@@ -1,5 +1,6 @@
 vlib work
 
+vcom -mixedsvvh -2008 src/rtl/payload_aligner_pkg.vhd
 vcom -mixedsvvh -2008 src/rtl/payload_aligner.vhd
 
 vlog -sv src/sim/packet_intf.sv

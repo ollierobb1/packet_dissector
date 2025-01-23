@@ -14,9 +14,6 @@ module payload_aligner_tests (
             _data[i] = $urandom_range(0, 255);
         end
 
-        $display("Byte Array: %h", _data);
-        $display("MSB: %h, LSB: %h", _data[_data.size()-1], _data[0]);
-
         stim.write(_data);
     end 
 
