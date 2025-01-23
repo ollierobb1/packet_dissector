@@ -8,7 +8,7 @@ module payload_aligner_tests (
 
     initial begin
         #10ns
-        _data = new[25];
+        _data = new[26];
 
         foreach (_data[i]) begin
             _data[i] = $urandom_range(0, 255);

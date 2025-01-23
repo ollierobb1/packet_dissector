@@ -44,6 +44,7 @@ interface packet_intf (
         delay_cc();
 
         valid <= 1;
+        byte_enable <= '1;
 
         fork
             begin
