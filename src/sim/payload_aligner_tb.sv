@@ -1,5 +1,7 @@
 `timescale 1ns/100ps
 
+import packet_pkg::*;
+
 module payload_aligner_tests (
     input logic clk,
     packet_intf.source stim
