@@ -7,21 +7,62 @@ module payload_aligner_tests (
     packet_intf.source stim,
     payload_aligner_intf.sink monitor
 );
+    int num_tests_passed = 0;
     packet_ct randomiser = new();
-    byte _data[];
+    
+    packet_ct expect_queue[$];
 
     initial begin
         #10ns
         randomiser.randomise(.payload_length(5));
-        $display("header A: %p, payload: %p", randomiser.header_a, randomiser.payload);
+        expect_queue.push_back(randomiser);
 
         stim.write(randomiser.packet);
+        teardown();
+
+        $info("%d Successfull Tests", num_tests_passed);
+
+        $finish;
     end 
 
     always begin
         automatic packet_ct expected;
         monitor.read(expected);
+        check_result(expected, expect_queue);
     end
+
+    function automatic check_result(packet_ct dut_packet, ref packet_ct expect_queue[$]);
+        automatic packet_ct exp = expect_queue.pop_front();
+        
+        if (exp.header_a != dut_packet.header_a) begin
+            $info("Mismatched Header A");
+            $info("Header A {E, R}: {%d, %d}", exp.header_a, dut_packet.header_a);
+            $fatal;
+        end
+
+        if (exp.header_b != dut_packet.header_b) begin
+            $info("Mismatched Header B");
+            $info("Header B {E, R}: {%d, %d}", exp.header_c, dut_packet.header_c);
+            $fatal;
+        end
+
+        if (exp.header_c != dut_packet.header_c) begin
+            $info("Mismatched Header C");
+            $info("Header C {E, R}: {%d, %d}", exp.header_c, dut_packet.header_c);
+            $fatal;
+        end
+
+        num_tests_passed++;
+    endfunction
+
+    task automatic delay_cc(int cycles = 1);
+        repeat (cycles) @(posedge(clk));
+    endtask
+
+    // Give DUT enough time to flush outputs
+    task automatic teardown();
+        delay_cc(256);
+    endtask
 
 endmodule
 

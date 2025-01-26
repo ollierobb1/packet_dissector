@@ -51,6 +51,9 @@ interface payload_aligner_intf (
     
     task automatic read (output packet_ct _data);
         _data = new();
+        
+        // Avoid picking up previous inputs combinatorially
+        delay_cc();
 
         fork
             begin
