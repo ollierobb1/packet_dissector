@@ -5,7 +5,7 @@ use IEEE.math_real.all;
 
 package payload_aligner_pkg is 
     constant PACKET_WIDTH_BITS       : natural := 64;
-    constant PACKET_WIDTH_BYTES      : natural := 64;
+    constant PACKET_WIDTH_BYTES      : natural := 8;
     constant HEADER_A_WIDTH_BITS     : natural := 48;
     constant HEADER_A_WIDTH_BYTES    : natural := 6;
     constant HEADER_B_WIDTH_BITS     : natural := 48;

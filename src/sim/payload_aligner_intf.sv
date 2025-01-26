@@ -78,10 +78,14 @@ interface payload_aligner_intf (
             begin
                 while (sop !== 1) delay_cc();
 
-                while (!eop) begin
+                forever begin
                     for (int curr_byte = 0; curr_byte < payload_aligner_pkg::packet_width_bytes; curr_byte++) begin
                         _data.payload = {_data.payload, payload[(curr_byte+1)*8-1 -: 8]};
                     end
+
+                    // Finish reading payload if eop is raised
+                    if (eop) break;
+
                     delay_cc();
                 end
             end

@@ -21,10 +21,6 @@ module payload_aligner_tests (
     always begin
         automatic packet_ct expected;
         monitor.read(expected);
-        $display("received a:  %p", expected.header_a);
-        $display("received b:  %p", expected.header_b);
-        $display("received c:  %p", expected.header_c);
-        $display("received payload:  %p", expected.payload);
     end
 
 endmodule
