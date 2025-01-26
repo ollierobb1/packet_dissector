@@ -4,6 +4,7 @@ import packet_pkg::*;
 
 module payload_aligner_tests (
     input logic clk,
+    output logic reset,
     packet_intf.source stim,
     payload_aligner_intf.sink monitor
 );
@@ -13,9 +14,8 @@ module payload_aligner_tests (
     
     packet_ct expect_queue[$];
 
-    initial begin
-        #10ns
-        
+    initial begin        
+        setup();
         test_random();
         teardown();
 
@@ -60,6 +60,14 @@ module payload_aligner_tests (
         repeat (cycles) @(posedge(clk));
     endtask
 
+    task automatic setup();
+        reset = 0;
+        delay_cc();
+        reset = 1;
+        delay_cc();
+        reset = 0;
+    endtask
+
     // Give DUT enough time to flush outputs
     task automatic teardown();
         delay_cc(256);
@@ -82,6 +90,7 @@ endmodule
 
 module payload_aligner_wrap (
     input logic clk,
+    input logic reset,
     packet_intf.sink stim,
     payload_aligner_intf.source monitor
 );
@@ -119,7 +128,7 @@ module payload_aligner_wrap (
 
     payload_aligner inner (
         .iClk(clk),
-        .iReset(),
+        .iReset(reset),
 
         .iValid(stim.valid),
         .iPacket(stim.data),
@@ -148,6 +157,7 @@ endmodule
 
 module payload_aligner_tb;
     logic clk = 0;
+    logic reset;
 
     packet_intf stim (.*);
 
