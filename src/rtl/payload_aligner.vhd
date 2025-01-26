@@ -20,14 +20,7 @@ entity payload_aligner is
 
         -- Header fields A, B and C arrive at different words in packet 
         -- Therefore, each header field needs it's own valid flag to achieve lowest latency
-        oHeader_A       : out std_logic_vector(HEADER_A_WIDTH_BITS - 1 downto 0);
-        oHeader_A_valid : out std_logic;
-
-        oHeader_B       : out std_logic_vector(HEADER_B_WIDTH_BITS - 1 downto 0);
-        oHeader_B_valid : out std_logic;
-        
-        oHeader_C       : out std_logic_vector(HEADER_C_WIDTH_BITS - 1 downto 0);
-        oHeader_C_valid : out std_logic;
+        oHeaders        : out headers_t;
 
         oPayload        : out std_logic_vector(PACKET_WIDTH_BITS - 1 downto 0);
         oPayload_valid  : out std_logic;
@@ -77,22 +70,22 @@ begin
         next_state <= current_state;
         case current_state is
             when IDLE =>
-                oHeader_A_valid <= '0';
-                oHeader_B_valid <= '0';
-                oHeader_C_valid <= '0';
+                oHeaders.header_a_valid <= '0';
+                oHeaders.header_b_valid <= '0';
+                oHeaders.header_c_valid <= '0';
                 oPayload_valid  <= '0';
 
                 -- First word of packet contains header A
                 if iValid then
-                    oHeader_A_valid <= '1';
+                    oHeaders.header_a_valid <= '1';
                     
                     next_state <= HEADER;
                 end if;
 
             when HEADER =>
                 -- Second word of packet contains headers B and C
-                oHeader_B_valid <= '1';
-                oHeader_C_valid <= '1';
+                oHeaders.header_b_valid <= '1';
+                oHeaders.header_c_valid <= '1';
 
                 next_state <= PAYLOAD;
 
@@ -142,9 +135,9 @@ begin
         end if;
     end process;
 
-    oHeader_A <= iPacket(HEADER_A_PACKET_RANGE) when word_count = 0 else header_A_latched;
-    oHeader_B <= packet_d1(HEADER_B_PACKET_RANGE_0) & iPacket(HEADER_B_PACKET_RANGE_1) when word_count = 1 else header_B_latched;
-    oHeader_C <= iPacket(HEADER_C_PACKET_RANGE) when word_count = 1 else header_C_latched;
+    oHeaders.header_a <= iPacket(HEADER_A_PACKET_RANGE) when word_count = 0 else header_A_latched;
+    oHeaders.header_b <= packet_d1(HEADER_B_PACKET_RANGE_0) & iPacket(HEADER_B_PACKET_RANGE_1) when word_count = 1 else header_B_latched;
+    oHeaders.header_c <= iPacket(HEADER_C_PACKET_RANGE) when word_count = 1 else header_C_latched;
 
     p_align_payload : process(all)
     begin

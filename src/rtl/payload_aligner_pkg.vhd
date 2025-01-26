@@ -19,4 +19,13 @@ package payload_aligner_pkg is
     subtype  HEADER_B_PACKET_RANGE_1 is natural range 63 downto 32;
     subtype  HEADER_C_PACKET_RANGE is natural range 31 downto 16;
 
+    type headers_t is record
+        header_a        : std_logic_vector(HEADER_A_WIDTH_BITS - 1 downto 0);
+        header_a_valid  : std_logic;
+        header_b        : std_logic_vector(HEADER_B_WIDTH_BITS - 1 downto 0);
+        header_b_valid  : std_logic;
+        header_c        : std_logic_vector(HEADER_C_WIDTH_BITS - 1 downto 0);
+        header_c_valid  : std_logic;
+    end record;
+
 end package payload_aligner_pkg;

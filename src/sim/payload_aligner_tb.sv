@@ -1,6 +1,7 @@
 `timescale 1ns/100ps
 
 import packet_pkg::*;
+import payload_aligner_pkg::*;
 
 module payload_aligner_tests (
     input logic clk,
@@ -97,27 +98,13 @@ module payload_aligner_wrap (
     logic tmp_payload_valid;
     logic [63:0] tmp_payload;
 
-    logic tmp_header_a_valid;
-    logic [47:0] tmp_header_a;
-
-    logic tmp_header_b_valid;
-    logic [47:0] tmp_header_b;
-
-    logic tmp_header_c_valid;
-    logic [15:0] tmp_header_c;
+    headers_t tmp_headers;
 
     logic tmp_sop;
     logic tmp_eop;
 
     always_comb begin
-        monitor.header_a_valid <= tmp_header_a_valid;
-        monitor.header_a <= tmp_header_a;
-
-        monitor.header_b_valid <= tmp_header_b_valid;
-        monitor.header_b <= tmp_header_b;
-
-        monitor.header_c_valid <= tmp_header_c_valid;
-        monitor.header_c <= tmp_header_c;
+        monitor.headers <= tmp_headers;
 
         monitor.payload_valid <= tmp_payload_valid;
         monitor.payload <= tmp_payload;
@@ -140,14 +127,7 @@ module payload_aligner_wrap (
         .oPayload(tmp_payload),
         .oPayload_valid(tmp_payload_valid),
 
-        .oHeader_A(tmp_header_a),
-        .oHeader_A_valid(tmp_header_a_valid),
-        
-        .oHeader_B(tmp_header_b),
-        .oHeader_B_valid(tmp_header_b_valid),
-        
-        .oHeader_C(tmp_header_c),
-        .oHeader_C_valid(tmp_header_c_valid),
+        .oHeaders(tmp_headers),
 
         .oSop(tmp_sop),
         .oEop(tmp_eop),

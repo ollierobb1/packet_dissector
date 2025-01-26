@@ -1,18 +1,11 @@
 import packet_pkg::*;
+import payload_aligner_pkg::*;
 
 interface payload_aligner_intf (
     input logic clk
 );
 
-    logic header_a_valid;
-    logic [47:0] header_a;
-
-    logic header_b_valid;
-    logic [47:0] header_b;
-
-    logic header_c_valid;
-    logic [47:0] header_c;
-
+    headers_t headers;
     logic payload_valid;
     logic [63:0] payload;
     logic [7:0] byte_enable;
@@ -20,12 +13,7 @@ interface payload_aligner_intf (
     logic eop;
 
     modport sink (
-        input header_a_valid, 
-        input header_a, 
-        input header_b_valid, 
-        input header_b, 
-        input header_c_valid, 
-        input header_c, 
+        input headers,
         input payload_valid, 
         input payload, 
         input byte_enable, 
@@ -35,12 +23,7 @@ interface payload_aligner_intf (
     );
 
     modport source (
-        output header_a_valid, 
-        output header_a, 
-        output header_b_valid, 
-        output header_b, 
-        output header_c_valid, 
-        output header_c, 
+        output headers,
         output payload_valid, 
         output payload, 
         output byte_enable, 
@@ -48,7 +31,6 @@ interface payload_aligner_intf (
         output eop
     );
 
-    
     task automatic read (output packet_ct _data);
         _data = new();
         
@@ -57,25 +39,25 @@ interface payload_aligner_intf (
 
         fork
             begin
-                while (header_a_valid !== 1) delay_cc();
+                while (headers.header_a_valid !== 1) delay_cc();
 
                 // Need to convert DUT logic vectors back to unpacked byte array to match golden data format
                 for (int curr_byte = 0; curr_byte < payload_aligner_pkg::header_a_width_bytes; curr_byte++) begin
-                    _data.header_a[curr_byte] = header_a[(curr_byte+1)*8-1 -: 8];
+                    _data.header_a[curr_byte] = headers.header_a[(curr_byte+1)*8-1 -: 8];
                 end
             end
             begin
-                while (header_b_valid !== 1) delay_cc();
+                while (headers.header_b_valid !== 1) delay_cc();
 
                 for (int curr_byte = 0; curr_byte < payload_aligner_pkg::header_b_width_bytes; curr_byte++) begin
-                    _data.header_b[curr_byte] = header_b[(curr_byte+1)*8-1 -: 8];
+                    _data.header_b[curr_byte] = headers.header_b[(curr_byte+1)*8-1 -: 8];
                 end
             end
             begin
-                while (header_c_valid !== 1) delay_cc();
+                while (headers.header_c_valid !== 1) delay_cc();
 
                 for (int curr_byte = 0; curr_byte < payload_aligner_pkg::header_c_width_bytes; curr_byte++) begin
-                    _data.header_c[curr_byte] = header_c[(curr_byte+1)*8-1 -: 8];
+                    _data.header_c[curr_byte] = headers.header_c[(curr_byte+1)*8-1 -: 8];
                 end
             end
             begin
