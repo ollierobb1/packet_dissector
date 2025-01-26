@@ -4,27 +4,67 @@ import packet_pkg::*;
 
 module payload_aligner_tests (
     input logic clk,
-    packet_intf.source stim
+    packet_intf.source stim,
+    payload_aligner_intf.sink monitor
 );
+    packet_ct randomiser = new();
     byte _data[];
 
     initial begin
         #10ns
-        _data = new[26];
+        randomiser.randomise(.payload_length(5));
+        $display("header A: %p, payload: %p", randomiser.header_a, randomiser.payload);
 
-        foreach (_data[i]) begin
-            _data[i] = $urandom_range(0, 255);
-        end
-
-        stim.write(_data);
+        stim.write(randomiser.packet);
     end 
+
+    always begin
+        automatic packet_ct expected;
+        monitor.read(expected);
+        $display("received a:  %p", expected.header_a);
+        $display("received b:  %p", expected.header_b);
+        $display("received c:  %p", expected.header_c);
+        $display("received payload:  %p", expected.payload);
+    end
 
 endmodule
 
 module payload_aligner_wrap (
     input logic clk,
-    packet_intf.sink stim
+    packet_intf.sink stim,
+    payload_aligner_intf.source monitor
 );
+    logic tmp_payload_valid;
+    logic [63:0] tmp_payload;
+
+    logic tmp_header_a_valid;
+    logic [47:0] tmp_header_a;
+
+    logic tmp_header_b_valid;
+    logic [47:0] tmp_header_b;
+
+    logic tmp_header_c_valid;
+    logic [15:0] tmp_header_c;
+
+    logic tmp_sop;
+    logic tmp_eop;
+
+    always_comb begin
+        monitor.header_a_valid <= tmp_header_a_valid;
+        monitor.header_a <= tmp_header_a;
+
+        monitor.header_b_valid <= tmp_header_b_valid;
+        monitor.header_b <= tmp_header_b;
+
+        monitor.header_c_valid <= tmp_header_c_valid;
+        monitor.header_c <= tmp_header_c;
+
+        monitor.payload_valid <= tmp_payload_valid;
+        monitor.payload <= tmp_payload;
+
+        monitor.sop <= tmp_sop;
+        monitor.eop <= tmp_eop;
+    end
 
     payload_aligner inner (
         .iClk(clk),
@@ -37,20 +77,20 @@ module payload_aligner_wrap (
         .iEop(stim.eop),
         .iByte_enable(stim.byte_enable),
         
-        .oPayload(),
-        .oPayload_valid(),
+        .oPayload(tmp_payload),
+        .oPayload_valid(tmp_payload_valid),
 
-        .oHeader_A(),
-        .oHeader_A_valid(),
+        .oHeader_A(tmp_header_a),
+        .oHeader_A_valid(tmp_header_a_valid),
         
-        .oHeader_B(),
-        .oHeader_B_valid(),
+        .oHeader_B(tmp_header_b),
+        .oHeader_B_valid(tmp_header_b_valid),
         
-        .oHeader_C(),
-        .oHeader_C_valid(),
+        .oHeader_C(tmp_header_c),
+        .oHeader_C_valid(tmp_header_c_valid),
 
-        .oSop(),
-        .oEop(),
+        .oSop(tmp_sop),
+        .oEop(tmp_eop),
         .oByte_enable()
     ); 
 endmodule
@@ -59,6 +99,8 @@ module payload_aligner_tb;
     logic clk = 0;
 
     packet_intf stim (.*);
+
+    payload_aligner_intf monitor (.*);
 
     payload_aligner_wrap dut (.*);
 

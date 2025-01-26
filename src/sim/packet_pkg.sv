@@ -15,20 +15,12 @@ package packet_pkg;
             packet = new[total_packet_length];
 
             // Randomise each packet field individually before packing into a packet for easier comparison with DUT
-            foreach (header_a[i]) begin
-                header_a[i] = $urandom_range(0, 8'hFF);
-            end
-            foreach (header_a[i]) begin
-                header_b[i] = $urandom_range(0, 8'hFF);
-            end
-            foreach (header_a[i]) begin
-                header_c[i] = $urandom_range(0, 8'hFF);
-            end
+            foreach(header_a[i]) header_a[i] = $urandom_range(0, 8'hff);
+            foreach(header_b[i]) header_b[i] = $urandom_range(0, 8'hff);
+            foreach(header_c[i]) header_c[i] = $urandom_range(0, 8'hff);
 
             payload = new[payload_length];
-            foreach(payload[i]) begin
-                payload[i] = $urandom_range(0, 8'hFF);
-            end
+            foreach(payload[i]) payload[i] = $urandom_range(0, 8'hff);
             
             packet = {header_a, header_b, header_c, payload};
         endfunction

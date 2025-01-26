@@ -1,3 +1,5 @@
+import packet_pkg::*;
+
 interface packet_intf (
     input logic clk
 );
@@ -60,7 +62,7 @@ interface packet_intf (
                         int index = _words_sent * bytes_in_word + curr_byte; // Calculate the index in _data
                         if (index < _data.size()) begin
                             // Assign the byte into the correct position in the 64-bit word
-                            data[(bytes_in_word - 1 - curr_byte) * 8 +: 8] = _data[index];
+                            data[(bytes_in_word - 1 - curr_byte) * 8 +: 8] <= _data[index];
                         end
                     end
 
