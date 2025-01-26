@@ -16,7 +16,7 @@ entity payload_aligner is
 
         iSop            : in  std_logic;
         iEop            : in  std_logic;
-        iByte_enable    : in  std_logic_vector(7 downto 0);
+        iByte_enable    : in  std_logic_vector(BYTE_ENABLE_WIDTH_BITS - 1 downto 0);
 
         -- Header fields A, B and C arrive at different words in packet 
         -- Therefore, each header field needs it's own valid flag to achieve lowest latency
@@ -27,7 +27,7 @@ entity payload_aligner is
 
         oSop            : out std_logic;
         oEop            : out std_logic;
-        oByte_enable    : out std_logic_vector(7 downto 0)
+        oByte_enable    : out std_logic_vector(BYTE_ENABLE_WIDTH_BITS - 1 downto 0)
     );
 end entity payload_aligner;
 
@@ -151,6 +151,6 @@ begin
         end case;
     end process;
     
-    oByte_enable <= "11" & iByte_enable(7 downto 2);
+    oByte_enable <= "11" & iByte_enable(iByte_enable'left downto 2);
 
 end architecture rtl;

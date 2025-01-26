@@ -96,7 +96,7 @@ module payload_aligner_wrap (
     payload_aligner_intf.source monitor
 );
     logic tmp_payload_valid;
-    logic [63:0] tmp_payload;
+    logic [packet_width_bits - 1:0] tmp_payload;
 
     headers_t tmp_headers;
 

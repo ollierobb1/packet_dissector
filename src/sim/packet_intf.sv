@@ -1,12 +1,13 @@
 import packet_pkg::*;
+import payload_aligner_pkg::*;
 
 interface packet_intf (
     input logic clk
 );
 
     logic valid;
-    logic [63:0] data;
-    logic [7:0] byte_enable;
+    logic [packet_width_bits - 1:0] data;
+    logic [byte_enable_width_bits - 1:0] byte_enable;
     logic sop;
     logic eop;
 
@@ -33,12 +34,12 @@ interface packet_intf (
     endtask
 
     task automatic write(byte _data[]);
-        const int bytes_in_word = 64/8;
+        const int bytes_in_word = packet_width_bits / byte_width_bits;
 
-        int _bytes_left = _data.size() % 8; // Calculate how many bytes in the final word to keep
-        logic [7:0] _byte_enable = (_bytes_left == 0) ? '1 : ((1 << _bytes_left) - 1) << (8 - _bytes_left);
+        int _bytes_left = _data.size() % bytes_in_word; // Calculate how many bytes in the final word to keep
+        logic [byte_enable_width_bits - 1:0] _byte_enable = (_bytes_left == 0) ? '1 : ((1 << _bytes_left) - 1) << (byte_enable_width_bits - _bytes_left);
 
-        int _words_to_send = (_data.size() + 7) / 8;
+        int _words_to_send = (_data.size() + (bytes_in_word - 1)) / bytes_in_word;
         int _words_sent = 0;
 
         delay_cc();
@@ -60,7 +61,7 @@ interface packet_intf (
                         int index = _words_sent * bytes_in_word + curr_byte; // Calculate the index in _data
                         if (index < _data.size()) begin
                             // Assign the byte into the correct position in the 64-bit word
-                            data[(bytes_in_word - 1 - curr_byte) * 8 +: 8] <= _data[index];
+                            data[(bytes_in_word - 1 - curr_byte) * byte_width_bits +: byte_width_bits] <= _data[index];
                         end
                     end
 

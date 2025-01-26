@@ -12,6 +12,8 @@ package payload_aligner_pkg is
     constant HEADER_B_WIDTH_BYTES    : natural := 6;
     constant HEADER_C_WIDTH_BITS     : natural := 16;
     constant HEADER_C_WIDTH_BYTES    : natural := 2;
+    constant BYTE_WIDTH_BITS         : natural := 8;
+    constant BYTE_ENABLE_WIDTH_BITS  : natural := PACKET_WIDTH_BITS / BYTE_WIDTH_BITS;
 
     -- Header field positions are constant in packet
     subtype  HEADER_A_PACKET_RANGE is natural range 63 downto 16;

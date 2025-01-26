@@ -7,8 +7,8 @@ interface payload_aligner_intf (
 
     headers_t headers;
     logic payload_valid;
-    logic [63:0] payload;
-    logic [7:0] byte_enable;
+    logic [packet_width_bits - 1:0] payload;
+    logic [byte_enable_width_bits - 1:0] byte_enable;
     logic sop;
     logic eop;
 
@@ -43,21 +43,21 @@ interface payload_aligner_intf (
 
                 // Need to convert DUT logic vectors back to unpacked byte array to match golden data format
                 for (int curr_byte = 0; curr_byte < payload_aligner_pkg::header_a_width_bytes; curr_byte++) begin
-                    _data.header_a[curr_byte] = headers.header_a[(curr_byte+1)*8-1 -: 8];
+                    _data.header_a[curr_byte] = headers.header_a[(curr_byte + 1)*byte_width_bits - 1 -: byte_width_bits];
                 end
             end
             begin
                 while (headers.header_b_valid !== 1) delay_cc();
 
                 for (int curr_byte = 0; curr_byte < payload_aligner_pkg::header_b_width_bytes; curr_byte++) begin
-                    _data.header_b[curr_byte] = headers.header_b[(curr_byte+1)*8-1 -: 8];
+                    _data.header_b[curr_byte] = headers.header_b[(curr_byte + 1)*byte_width_bits - 1 -: byte_width_bits];
                 end
             end
             begin
                 while (headers.header_c_valid !== 1) delay_cc();
 
                 for (int curr_byte = 0; curr_byte < payload_aligner_pkg::header_c_width_bytes; curr_byte++) begin
-                    _data.header_c[curr_byte] = headers.header_c[(curr_byte+1)*8-1 -: 8];
+                    _data.header_c[curr_byte] = headers.header_c[(curr_byte + 1)*byte_width_bits - 1 -: byte_width_bits];
                 end
             end
             begin
@@ -65,7 +65,7 @@ interface payload_aligner_intf (
 
                 forever begin
                     for (int curr_byte = 0; curr_byte < payload_aligner_pkg::packet_width_bytes; curr_byte++) begin
-                        _data.payload = {_data.payload, payload[(curr_byte+1)*8-1 -: 8]};
+                        _data.payload = {_data.payload, payload[(curr_byte + 1)*byte_width_bits - 1 -: byte_width_bits]};
                     end
 
                     // Finish reading payload if eop is raised
