@@ -7,6 +7,7 @@ module payload_aligner_tests (
     packet_intf.source stim,
     payload_aligner_intf.sink monitor
 );
+    const bit debug_logs = 0;
     int num_tests_passed = 0;
     packet_ct randomiser = new();
     
@@ -14,10 +15,8 @@ module payload_aligner_tests (
 
     initial begin
         #10ns
-        randomiser.randomise(.payload_length(5));
-        expect_queue.push_back(randomiser);
-
-        stim.write(randomiser.packet);
+        
+        test_random();
         teardown();
 
         $info("%d Successfull Tests", num_tests_passed);
@@ -26,29 +25,31 @@ module payload_aligner_tests (
     end 
 
     always begin
-        automatic packet_ct expected;
-        monitor.read(expected);
-        check_result(expected, expect_queue);
+        automatic packet_ct dut_packet;
+        monitor.read(dut_packet);
+        check_result(dut_packet, expect_queue);
     end
 
-    function automatic check_result(packet_ct dut_packet, ref packet_ct expect_queue[$]);
-        automatic packet_ct exp = expect_queue.pop_front();
+    function automatic void check_result(packet_ct dut_packet, ref packet_ct expect_queue[$]);
+        automatic packet_ct expected_packet = expect_queue.pop_front();
+
+        if (debug_logs) $display($sformatf("Received Packet %p", dut_packet));
         
-        if (exp.header_a != dut_packet.header_a) begin
+        if (expected_packet.header_a != dut_packet.header_a) begin
             $info("Mismatched Header A");
-            $info("Header A {E, R}: {%d, %d}", exp.header_a, dut_packet.header_a);
+            $info("Header A {E, R}: {%d, %d}", expected_packet.header_a, dut_packet.header_a);
             $fatal;
         end
 
-        if (exp.header_b != dut_packet.header_b) begin
+        if (expected_packet.header_b != dut_packet.header_b) begin
             $info("Mismatched Header B");
-            $info("Header B {E, R}: {%d, %d}", exp.header_c, dut_packet.header_c);
+            $info("Header B {E, R}: {%d, %d}", expected_packet.header_c, dut_packet.header_c);
             $fatal;
         end
 
-        if (exp.header_c != dut_packet.header_c) begin
+        if (expected_packet.header_c != dut_packet.header_c) begin
             $info("Mismatched Header C");
-            $info("Header C {E, R}: {%d, %d}", exp.header_c, dut_packet.header_c);
+            $info("Header C {E, R}: {%d, %d}", expected_packet.header_c, dut_packet.header_c);
             $fatal;
         end
 
@@ -62,6 +63,19 @@ module payload_aligner_tests (
     // Give DUT enough time to flush outputs
     task automatic teardown();
         delay_cc(256);
+    endtask
+
+    task automatic test_random(int num_tests = 100);
+        repeat(num_tests) begin
+            randomiser.randomise(.payload_length(5));
+
+            if (debug_logs) $display($sformatf("Generated Packet %p", randomiser));
+
+            expect_queue.push_back(randomiser);
+
+            stim.write(randomiser.packet);
+            delay_cc();
+        end
     endtask
 
 endmodule

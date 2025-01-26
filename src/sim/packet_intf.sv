@@ -41,8 +41,6 @@ interface packet_intf (
         int _words_to_send = (_data.size() + 7) / 8;
         int _words_sent = 0;
 
-        $display("word to send and size %d %d", _words_to_send, _data.size());
-
         delay_cc();
 
         valid <= 1;
