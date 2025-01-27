@@ -25,6 +25,22 @@ package packet_pkg;
             packet = {header_a, header_b, header_c, payload};
         endfunction
 
+        function packet_ct clone();
+            packet_ct new_obj = new();
+
+            new_obj.header_a = this.header_a;
+            new_obj.header_b = this.header_b;
+            new_obj.header_c = this.header_c;
+
+            new_obj.payload = new[this.payload.size()];
+            foreach (this.payload[i]) new_obj.payload[i] = this.payload[i];
+
+            new_obj.packet = new[this.packet.size()];
+            foreach (this.packet[i]) new_obj.packet[i] = this.packet[i];
+
+            return new_obj;
+        endfunction
+
     endclass
 
 endpackage

@@ -49,11 +49,13 @@ interface packet_intf (
 
         fork
             begin
+                // Pulse start of packet
                 sop <= 1;
                 delay_cc();
                 sop <= 0;
             end
             begin
+                // Drive each word of packet
                 while (_words_sent < _words_to_send) begin
                     data = 0;
                     // Write current word
@@ -65,6 +67,7 @@ interface packet_intf (
                         end
                     end
 
+                    // Pulse end of packet when last word is being sent
                     if (_words_sent == _words_to_send - 1) begin
                        eop <= 1;
                        byte_enable <= _byte_enable; 

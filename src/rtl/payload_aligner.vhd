@@ -88,11 +88,19 @@ begin
                 -- Second word of packet contains headers B and C
                 oHeaders.header_b_valid <= '1';
                 oHeaders.header_c_valid <= '1';
-
-                next_state <= PAYLOAD;
+                
+                -- Check for corner case where payload is at most 2 bytes (same word as headers)
+                if iEop /= '1' then
+                    next_state <= PAYLOAD;
+                else 
+                    oPayload_valid <= '1';
+                    oSop <= '1';
+                    oEop <= '1';
+                    next_state <= IDLE;
+                end if;
 
             when PAYLOAD =>
-                -- Second and third word of packet contain first two bytes of payload word
+                -- Second and third word of packet contain first payload word
                 oPayload_valid <= '1';
                 
                 -- Pulse sop when first word of payload is sent
@@ -158,7 +166,8 @@ begin
             when 0 =>
                 -- No payload present in first word of packet
             when 1 =>
-                -- Only partial payload present in second word of packet
+                -- Second word of packet containts payload in last two bytes
+                oPayload(oPayload'left downto oPayload'left - 15) <= iPacket(15 downto 0);
             when others =>
                 -- Realigned payload is made up of bottom two bytes of previous packet and top 6 bytes of current packet
                 oPayload <= packet_d1(15 downto 0) & iPacket(63 downto 16);
@@ -172,6 +181,8 @@ begin
             oByte_enable <= "11" & iByte_enable(iByte_enable'left downto 2);
         elsif current_state = PAYLOAD_OVERFLOW then
             oByte_enable(oByte_enable'left downto oByte_enable'left - 1) <= byte_enable_d1(1 downto 0);
+        elsif current_state = HEADER and oEop = '1'then
+            oByte_enable(oByte_enable'left downto oByte_enable'left - 1) <= iByte_enable(1 downto 0);
         end if;
     end process;
     

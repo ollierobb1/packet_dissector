@@ -64,7 +64,7 @@ interface payload_aligner_intf (
                 while (sop !== 1) delay_cc();
 
                 forever begin
-                    // Finish reading payload if eop is raised
+                    // Finish reading enabled bytes if end of packet is raised
                     if (eop) begin
                         for (int curr_byte = byte_enable_width_bits - 1; byte_enable[curr_byte] == 1; curr_byte--) begin
                             _data.payload = {_data.payload, payload[(curr_byte + 1)*byte_width_bits - 1 -: byte_width_bits]};
