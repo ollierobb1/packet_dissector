@@ -6,6 +6,10 @@ use IEEE.math_real.all;
 library work;
 use work.payload_aligner_pkg.all;
 
+-- This module acts as a packet dissector, extracting and aligning headers and payload.
+-- Header fields A, B and C arrive at different words in packet, therefore, each header field 
+-- has it's own valid flag to achieve 0 latency.
+
 entity payload_aligner is
     port(
         iClk            : in  std_logic;
@@ -18,8 +22,6 @@ entity payload_aligner is
         iEop            : in  std_logic;
         iByte_enable    : in  std_logic_vector(BYTE_ENABLE_WIDTH_BITS - 1 downto 0);
 
-        -- Header fields A, B and C arrive at different words in packet 
-        -- Therefore, each header field needs it's own valid flag to achieve lowest latency
         oHeaders        : out headers_t;
 
         oPayload        : out std_logic_vector(PACKET_WIDTH_BITS - 1 downto 0);

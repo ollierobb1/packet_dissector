@@ -9,7 +9,7 @@ module payload_aligner_tests (
     packet_intf.source stim,
     payload_aligner_intf.sink monitor
 );
-    const bit debug_logs = 1;
+    const bit debug_logs = 0;
     int num_tests_passed = 0;
     packet_ct randomiser = new();
     
@@ -17,7 +17,11 @@ module payload_aligner_tests (
 
     initial begin        
         setup();
-        test_random();
+        test_random(1000);
+        teardown();
+
+        setup();
+        test_short_payload();
         teardown();
 
         $info("%d Successfull Tests", num_tests_passed);
@@ -26,6 +30,7 @@ module payload_aligner_tests (
     end 
 
     always begin
+        // Monitor DUT and compare result to expected
         automatic packet_ct dut_packet;
         monitor.read(dut_packet);
         check_result(dut_packet, expect_queue);
@@ -66,6 +71,8 @@ module payload_aligner_tests (
             end
         end
 
+        if (debug_logs) $display($sformatf("Removing Packet From Queue %p", expected_packet));
+
         num_tests_passed++;
     endfunction
 
@@ -92,13 +99,26 @@ module payload_aligner_tests (
         repeat(num_tests) begin
             randomiser.randomise();
 
-            if (debug_logs) $display($sformatf("Generated Packet %p", randomiser));
+            if (debug_logs) $display($sformatf("Adding Expected Packet %p", randomiser));
 
-            expect_queue.push_back(randomiser);
+            expect_queue.push_back(randomiser.clone());
 
             stim.write(randomiser.packet);
-            delay_cc(5);
+
+            // Randomise interpacket gap and test back to back packets
+            delay_cc($urandom_range(0, 5));
         end
+    endtask
+
+    task automatic test_short_payload();
+        // Payloads between 1 to 2 bytes will cause eop to be raised on the same cycle as headers
+        randomiser.randomise($urandom_range(0, 1));
+
+        if (debug_logs) $display($sformatf("Adding Expected Packet %p", randomiser));
+
+        expect_queue.push_back(randomiser.clone());
+
+        stim.write(randomiser.packet);
     endtask
 
 endmodule
