@@ -1,6 +1,6 @@
 # Packet Dissector
 
-A 0 cycle packet dissector.
+A 0 cycle latency packet dissector.
 
 # Testbench
 
