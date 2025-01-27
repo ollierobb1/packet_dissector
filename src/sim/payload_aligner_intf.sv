@@ -64,12 +64,18 @@ interface payload_aligner_intf (
                 while (sop !== 1) delay_cc();
 
                 forever begin
-                    for (int curr_byte = 0; curr_byte < payload_aligner_pkg::packet_width_bytes; curr_byte++) begin
-                        _data.payload = {_data.payload, payload[(curr_byte + 1)*byte_width_bits - 1 -: byte_width_bits]};
+                    // Finish reading payload if eop is raised
+                    if (eop) begin
+                        for (int curr_byte = byte_enable_width_bits - 1; byte_enable[curr_byte] == 1; curr_byte--) begin
+                            _data.payload = {_data.payload, payload[(curr_byte + 1)*byte_width_bits - 1 -: byte_width_bits]};
+                        end
+                    
+                        break;
                     end
 
-                    // Finish reading payload if eop is raised
-                    if (eop) break;
+                    for (int curr_byte = payload_aligner_pkg::packet_width_bytes - 1; curr_byte >= 0; curr_byte--) begin
+                        _data.payload = {_data.payload, payload[(curr_byte + 1)*byte_width_bits - 1 -: byte_width_bits]};
+                    end
 
                     delay_cc();
                 end

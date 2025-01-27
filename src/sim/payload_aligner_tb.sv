@@ -9,7 +9,7 @@ module payload_aligner_tests (
     packet_intf.source stim,
     payload_aligner_intf.sink monitor
 );
-    const bit debug_logs = 0;
+    const bit debug_logs = 1;
     int num_tests_passed = 0;
     packet_ct randomiser = new();
     
@@ -38,20 +38,32 @@ module payload_aligner_tests (
         
         if (expected_packet.header_a != dut_packet.header_a) begin
             $info("Mismatched Header A");
-            $info("Header A {E, R}: {%d, %d}", expected_packet.header_a, dut_packet.header_a);
+            $info("Header A {E, R}: {%p, %p}", expected_packet.header_a, dut_packet.header_a);
             $fatal;
         end
 
         if (expected_packet.header_b != dut_packet.header_b) begin
             $info("Mismatched Header B");
-            $info("Header B {E, R}: {%d, %d}", expected_packet.header_c, dut_packet.header_c);
+            $info("Header B {E, R}: {%p, %p}", expected_packet.header_c, dut_packet.header_c);
             $fatal;
         end
 
         if (expected_packet.header_c != dut_packet.header_c) begin
             $info("Mismatched Header C");
-            $info("Header C {E, R}: {%d, %d}", expected_packet.header_c, dut_packet.header_c);
+            $info("Header C {E, R}: {%p, %p}", expected_packet.header_c, dut_packet.header_c);
             $fatal;
+        end
+
+        if (expected_packet.payload.size() != dut_packet.payload.size()) begin
+            $info("Mismatch in Payload Size");
+            $info("Payload Size {E, R}: {%d, %d}", expected_packet.payload.size(), dut_packet.payload.size());
+            $fatal;
+        end else begin
+            if (expected_packet.payload != dut_packet.payload) begin
+                $info("Mismatch in Payload");
+                $info("Payload {E, R}: {%p, %p}", expected_packet.payload, dut_packet.payload);
+                $fatal;
+            end
         end
 
         num_tests_passed++;
@@ -62,6 +74,8 @@ module payload_aligner_tests (
     endtask
 
     task automatic setup();
+        stim.clear();
+
         reset = 0;
         delay_cc();
         reset = 1;
@@ -76,14 +90,14 @@ module payload_aligner_tests (
 
     task automatic test_random(int num_tests = 100);
         repeat(num_tests) begin
-            randomiser.randomise(.payload_length(5));
+            randomiser.randomise();
 
             if (debug_logs) $display($sformatf("Generated Packet %p", randomiser));
 
             expect_queue.push_back(randomiser);
 
             stim.write(randomiser.packet);
-            delay_cc();
+            delay_cc(5);
         end
     endtask
 
@@ -102,6 +116,7 @@ module payload_aligner_wrap (
 
     logic tmp_sop;
     logic tmp_eop;
+    logic [byte_enable_width_bits - 1:0] tmp_byte_enable;
 
     always_comb begin
         monitor.headers <= tmp_headers;
@@ -111,6 +126,7 @@ module payload_aligner_wrap (
 
         monitor.sop <= tmp_sop;
         monitor.eop <= tmp_eop;
+        monitor.byte_enable <= tmp_byte_enable;
     end
 
     payload_aligner inner (
@@ -131,7 +147,7 @@ module payload_aligner_wrap (
 
         .oSop(tmp_sop),
         .oEop(tmp_eop),
-        .oByte_enable()
+        .oByte_enable(tmp_byte_enable)
     ); 
 endmodule
 

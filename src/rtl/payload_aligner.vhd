@@ -35,7 +35,8 @@ architecture rtl of payload_aligner is
     type state_t is (
         IDLE,
         HEADER,
-        PAYLOAD
+        PAYLOAD,
+        PAYLOAD_OVERFLOW
     );
 
     signal current_state    : state_t;
@@ -44,6 +45,7 @@ architecture rtl of payload_aligner is
     signal word_count       : natural := 0;
 
     signal packet_d1        : std_logic_vector(PACKET_WIDTH_BITS - 1 downto 0);
+    signal byte_enable_d1   : std_logic_vector(BYTE_ENABLE_WIDTH_BITS - 1 downto 0);
     signal payload_valid_d1 : std_logic;
 
     signal header_A_latched : std_logic_vector(HEADER_A_WIDTH_BITS - 1 downto 0);
@@ -73,7 +75,7 @@ begin
                 oHeaders.header_a_valid <= '0';
                 oHeaders.header_b_valid <= '0';
                 oHeaders.header_c_valid <= '0';
-                oPayload_valid  <= '0';
+                oPayload_valid          <= '0';
 
                 -- First word of packet contains header A
                 if iValid then
@@ -92,26 +94,36 @@ begin
             when PAYLOAD =>
                 -- Second and third word of packet contain first payload word
                 oPayload_valid <= '1';
-
+                
                 -- Pulse sop when entering PAYLOAD for the first cycle
                 if not payload_valid_d1 then
                     oSop <= '1';
                 end if;
                 
-                if iEop then
-                    oEop <= '1';
-                    next_state <= IDLE;
+                if iEop = '1' then
+                    if iByte_enable(1) /= '1' then
+                        oEop <= '1';
+                        next_state <= IDLE;
+                    else 
+                        next_state <= PAYLOAD_OVERFLOW;
+                    end if;
                 end if;
+                
+            when PAYLOAD_OVERFLOW =>
+                oEop <= '1';
+                next_state <= IDLE;
+
         end case;
     end process;
 
-    packet_d1 <= iPacket when rising_edge(iClk);
+    packet_d1        <= iPacket when rising_edge(iClk);
     payload_valid_d1 <= oPayload_valid when rising_edge(iClk);
+    byte_enable_d1   <= iByte_enable when rising_edge(iClk);
   
     p_word_counter : process(iClK)
     begin
         if rising_edge(iClk) then
-            if iReset or iEop then
+            if iReset or oEop then
                 word_count <= 0;
             elsif iValid then
                 word_count <= word_count + 1;
@@ -150,7 +162,15 @@ begin
                 oPayload <= packet_d1(15 downto 0) & iPacket(63 downto 16);
         end case;
     end process;
-    
-    oByte_enable <= "11" & iByte_enable(iByte_enable'left downto 2);
 
+    p_byte_enable : process(all) 
+    begin
+        oByte_enable <= (others => '0');
+        if current_state = PAYLOAD then
+            oByte_enable <= "11" & iByte_enable(iByte_enable'left downto 2);
+        elsif current_state = PAYLOAD_OVERFLOW then
+            oByte_enable(oByte_enable'left downto oByte_enable'left - 1) <= byte_enable_d1(1 downto 0);
+        end if;
+    end process;
+    
 end architecture rtl;
