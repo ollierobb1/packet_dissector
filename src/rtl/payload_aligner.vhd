@@ -92,20 +92,21 @@ begin
                 next_state <= PAYLOAD;
 
             when PAYLOAD =>
-                -- Second and third word of packet contain first payload word
+                -- Second and third word of packet contain first two bytes of payload word
                 oPayload_valid <= '1';
                 
-                -- Pulse sop when entering PAYLOAD for the first cycle
+                -- Pulse sop when first word of payload is sent
                 if not payload_valid_d1 then
                     oSop <= '1';
                 end if;
                 
                 if iEop = '1' then
-                    if iByte_enable(1) /= '1' then
+                    -- If the last two bytes of the payload are valid then we will need an extra cycle to send them
+                    if iByte_enable(1) = '1' then
+                        next_state <= PAYLOAD_OVERFLOW;
+                    else 
                         oEop <= '1';
                         next_state <= IDLE;
-                    else 
-                        next_state <= PAYLOAD_OVERFLOW;
                     end if;
                 end if;
                 
@@ -159,6 +160,7 @@ begin
             when 1 =>
                 -- Only partial payload present in second word of packet
             when others =>
+                -- Realigned payload is made up of bottom two bytes of previous packet and top 6 bytes of current packet
                 oPayload <= packet_d1(15 downto 0) & iPacket(63 downto 16);
         end case;
     end process;
